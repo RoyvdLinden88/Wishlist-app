@@ -6,7 +6,6 @@ const { getCategoryMeta, getStatusMeta } = useMeta()
 
 await fetchItems()
 
-// Modal state
 const modalOpen = ref(false)
 const editItem = ref<WishlistItem | null>(null)
 const deleteId = ref<string | null>(null)
@@ -31,10 +30,10 @@ const closeModal = () => {
 const onSave = async (data: WishlistItemInsert) => {
   if (editItem.value) {
     await updateItem(editItem.value.id, data)
-    flash('Item updated!')
+    flash('Item bijgewerkt!')
   } else {
     await createItem(data)
-    flash('Item added!')
+    flash('Item toegevoegd!')
   }
   closeModal()
 }
@@ -47,7 +46,7 @@ const confirmDelete = (item: WishlistItem) => {
 const onDelete = async () => {
   if (deleteId.value) {
     await deleteItem(deleteId.value)
-    flash('Item deleted.')
+    flash('Item verwijderd.')
     deleteId.value = null
     deleteTitle.value = ''
   }
@@ -58,20 +57,18 @@ const flash = (msg: string) => {
   setTimeout(() => { successMessage.value = '' }, 2500)
 }
 
-// Table search
 const search = ref('')
 const filteredItems = computed(() => {
   if (!search.value) return items.value
   const q = search.value.toLowerCase()
   return items.value.filter(i =>
     i.title.toLowerCase().includes(q)
-    || i.category.includes(q)
-    || i.tags?.some(t => t.includes(q)),
+    || i.category.includes(q),
   )
 })
 
 const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  new Date(d).toLocaleDateString('nl-NL', { day: '2-digit', month: 'short', year: 'numeric' })
 </script>
 
 <template>
@@ -82,14 +79,15 @@ const formatDate = (d: string) =>
       <!-- Page header -->
       <div class="flex items-start justify-between gap-4">
         <div>
-          <h1 class="font-display text-4xl font-800 tracking-tight">Manage</h1>
-          <p class="text-white/40 text-sm mt-1">Create, edit and delete wishlist items.</p>
+          <h1 class="font-display text-4xl font-800 tracking-tight">Beheren</h1>
+          <p class="text-white/40 text-sm mt-1">Items toevoegen, bewerken en verwijderen.</p>
         </div>
         <button class="btn-primary mt-1" @click="openCreate">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
-          New Item
+          <span class="hidden sm:inline">Nieuw item</span>
+          <span class="sm:hidden">Nieuw</span>
         </button>
       </div>
 
@@ -120,7 +118,7 @@ const formatDate = (d: string) =>
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
-        <input v-model="search" class="input pl-9" placeholder="Search items..." />
+        <input v-model="search" class="input pl-9" placeholder="Zoeken..." />
       </div>
 
       <!-- Loading -->
@@ -130,7 +128,7 @@ const formatDate = (d: string) =>
           <path class="opacity-75" fill="currentColor"
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
         </svg>
-        Loading...
+        Laden...
       </div>
 
       <!-- Error -->
@@ -140,10 +138,15 @@ const formatDate = (d: string) =>
 
       <!-- Empty state -->
       <div v-else-if="!items.length" class="flex flex-col items-center py-20 text-center">
-        <div class="text-6xl mb-4">📋</div>
-        <h3 class="font-display font-700 text-xl mb-2">Nothing here yet</h3>
-        <p class="text-white/40 text-sm mb-6">Click "New Item" to add your first wishlist entry.</p>
-        <button class="btn-primary" @click="openCreate">Add first item</button>
+        <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5 mb-4">
+          <svg class="h-8 w-8 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        </div>
+        <h3 class="font-display font-700 text-xl mb-2">Nog niets hier</h3>
+        <p class="text-white/40 text-sm mb-6">Klik op "Nieuw item" om je eerste item toe te voegen.</p>
+        <button class="btn-primary" @click="openCreate">Eerste item toevoegen</button>
       </div>
 
       <!-- Table -->
@@ -162,7 +165,7 @@ const formatDate = (d: string) =>
           <div
             v-for="item in filteredItems"
             :key="item.id"
-            class="group px-5 py-3 hover:bg-white/4 transition-colors"
+            class="group px-5 py-3 hover:bg-white/[0.04] transition-colors"
           >
             <!-- Mobile layout -->
             <div class="md:hidden space-y-2">
@@ -176,7 +179,9 @@ const formatDate = (d: string) =>
                   <div class="min-w-0">
                     <p class="font-medium text-sm truncate">{{ item.title }}</p>
                     <div class="flex items-center gap-2 mt-1">
-                      <span class="text-lg">{{ getCategoryMeta(item.category).icon }}</span>
+                      <span :class="[getCategoryMeta(item.category).color, 'text-xs']">
+                        {{ getCategoryMeta(item.category).label }}
+                      </span>
                       <span :class="[getStatusMeta(item.status).bg, getStatusMeta(item.status).color, 'badge']">
                         {{ getStatusMeta(item.status).label }}
                       </span>
@@ -202,23 +207,18 @@ const formatDate = (d: string) =>
 
             <!-- Desktop layout -->
             <div class="hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 items-center">
-              <!-- Title + tags -->
+              <!-- Title -->
               <div class="min-w-0">
                 <p class="font-medium text-sm truncate group-hover:text-brand-300 transition-colors">
                   {{ item.title }}
                 </p>
-                <div v-if="item.tags?.length" class="flex gap-1 mt-1 flex-wrap">
-                  <span
-                    v-for="tag in item.tags.slice(0, 3)"
-                    :key="tag"
-                    class="badge bg-white/6 text-white/35 text-[10px]"
-                  >#{{ tag }}</span>
-                </div>
               </div>
 
               <!-- Category -->
               <div class="flex items-center gap-2">
-                <span class="text-base">{{ getCategoryMeta(item.category).icon }}</span>
+                <svg class="h-3.5 w-3.5 flex-shrink-0" :class="getCategoryMeta(item.category).color" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                  <path stroke-linecap="round" stroke-linejoin="round" :d="getCategoryMeta(item.category).svgPath" />
+                </svg>
                 <span :class="[getCategoryMeta(item.category).color, 'text-xs']">
                   {{ getCategoryMeta(item.category).label }}
                 </span>
@@ -243,20 +243,20 @@ const formatDate = (d: string) =>
                   target="_blank"
                   rel="noopener"
                   class="btn-ghost p-1.5 text-white/40 hover:text-white"
-                  title="Open link"
+                  title="Link openen"
                 >
                   <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
                 </a>
-                <button class="btn-ghost p-1.5" title="Edit" @click="openEdit(item)">
+                <button class="btn-ghost p-1.5" title="Bewerken" @click="openEdit(item)">
                   <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </button>
-                <button class="btn-ghost p-1.5 text-white/40 hover:text-red-400" title="Delete" @click="confirmDelete(item)">
+                <button class="btn-ghost p-1.5 text-white/40 hover:text-red-400" title="Verwijderen" @click="confirmDelete(item)">
                   <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -268,13 +268,12 @@ const formatDate = (d: string) =>
         </div>
 
         <!-- Footer count -->
-        <div class="px-5 py-3 border-t border-white/8 text-xs text-white/30">
+        <div class="px-5 py-3 border-t border-white/10 text-xs text-white/30">
           {{ filteredItems.length }} {{ filteredItems.length === 1 ? 'item' : 'items' }}
         </div>
       </div>
     </main>
 
-    <!-- Modals -->
     <ItemModal
       :open="modalOpen"
       :item="editItem"
@@ -284,8 +283,8 @@ const formatDate = (d: string) =>
 
     <ConfirmModal
       :open="!!deleteId"
-      title="Delete item?"
-      :message="`'${deleteTitle}' will be permanently removed.`"
+      title="Item verwijderen?"
+      :message="`'${deleteTitle}' wordt permanent verwijderd.`"
       @confirm="onDelete"
       @cancel="deleteId = null"
     />

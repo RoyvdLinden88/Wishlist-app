@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { WishlistItem, WishlistItemInsert, Category, Status, Priority } from '~/types'
+import type { WishlistItem, WishlistItemInsert, Category, Status } from '~/types'
 
 const props = defineProps<{
   open: boolean
@@ -11,23 +11,18 @@ const emit = defineEmits<{
   save: [data: WishlistItemInsert]
 }>()
 
-const { categories, statuses, priorities } = useMeta()
+const { categories, statuses } = useMeta()
 
 const defaultForm = (): WishlistItemInsert => ({
   title: '',
   description: null,
   category: 'movie',
   status: 'want_to_check',
-  priority: 'medium',
-  rating: null,
-  tags: [],
   url: null,
   image_url: null,
-  notes: null,
 })
 
 const form = ref<WishlistItemInsert>(defaultForm())
-const tagInput = ref('')
 
 watch(
   () => props.open,
@@ -39,37 +34,13 @@ watch(
             description: props.item.description,
             category: props.item.category,
             status: props.item.status,
-            priority: props.item.priority,
-            rating: props.item.rating,
-            tags: [...(props.item.tags ?? [])],
             url: props.item.url,
             image_url: props.item.image_url,
-            notes: props.item.notes,
           }
         : defaultForm()
-      tagInput.value = ''
     }
   },
 )
-
-const addTag = () => {
-  const t = tagInput.value.trim().toLowerCase().replace(/\s+/g, '-')
-  if (t && !form.value.tags.includes(t)) {
-    form.value.tags = [...form.value.tags, t]
-  }
-  tagInput.value = ''
-}
-
-const removeTag = (tag: string) => {
-  form.value.tags = form.value.tags.filter(t => t !== tag)
-}
-
-const onTagKeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Enter' || e.key === ',') {
-    e.preventDefault()
-    addTag()
-  }
-}
 
 const submit = () => {
   if (!form.value.title.trim()) return
@@ -79,7 +50,6 @@ const submit = () => {
     description: form.value.description?.trim() || null,
     url: form.value.url?.trim() || null,
     image_url: form.value.image_url?.trim() || null,
-    notes: form.value.notes?.trim() || null,
   })
 }
 
@@ -114,9 +84,9 @@ const isEdit = computed(() => !!props.item)
             class="w-full max-w-lg rounded-2xl bg-surface-800 border border-white/10 shadow-2xl shadow-black/60 overflow-hidden"
           >
             <!-- Header -->
-            <div class="flex items-center justify-between px-6 py-4 border-b border-white/8">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
               <h2 class="font-display font-700 text-lg">
-                {{ isEdit ? 'Edit Item' : 'Add New Item' }}
+                {{ isEdit ? 'Item bewerken' : 'Item toevoegen' }}
               </h2>
               <button class="btn-ghost p-1.5" @click="emit('close')">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -129,11 +99,11 @@ const isEdit = computed(() => !!props.item)
             <form class="overflow-y-auto max-h-[70vh] p-6 space-y-4" @submit.prevent="submit">
               <!-- Title -->
               <div>
-                <label class="label">Title *</label>
+                <label class="label">Titel *</label>
                 <input
                   v-model="form.title"
                   class="input"
-                  placeholder="What do you want to check out?"
+                  placeholder="Wat wil je ontdekken?"
                   required
                   autofocus
                 />
@@ -142,10 +112,10 @@ const isEdit = computed(() => !!props.item)
               <!-- Category + Status -->
               <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label class="label">Category</label>
+                  <label class="label">Categorie</label>
                   <select v-model="form.category as Category" class="input">
                     <option v-for="cat in categories" :key="cat.value" :value="cat.value">
-                      {{ cat.icon }} {{ cat.label }}
+                      {{ cat.label }}
                     </option>
                   </select>
                 </div>
@@ -159,37 +129,14 @@ const isEdit = computed(() => !!props.item)
                 </div>
               </div>
 
-              <!-- Priority + Rating -->
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="label">Priority</label>
-                  <select v-model="form.priority as Priority" class="input">
-                    <option v-for="p in priorities" :key="p.value" :value="p.value">
-                      {{ p.label }}
-                    </option>
-                  </select>
-                </div>
-                <div>
-                  <label class="label">Rating (1–5)</label>
-                  <input
-                    v-model.number="form.rating"
-                    type="number"
-                    min="1"
-                    max="5"
-                    class="input"
-                    placeholder="—"
-                  />
-                </div>
-              </div>
-
               <!-- Description -->
               <div>
-                <label class="label">Description</label>
+                <label class="label">Omschrijving</label>
                 <textarea
                   v-model="form.description"
                   class="input resize-none"
                   rows="2"
-                  placeholder="A short description..."
+                  placeholder="Korte omschrijving..."
                 />
               </div>
 
@@ -204,50 +151,26 @@ const isEdit = computed(() => !!props.item)
                 />
               </div>
 
-              <!-- Tags -->
+              <!-- Image URL -->
               <div>
-                <label class="label">Tags</label>
-                <div class="flex gap-2 mb-2">
-                  <input
-                    v-model="tagInput"
-                    class="input flex-1"
-                    placeholder="Add tag, press Enter"
-                    @keydown="onTagKeydown"
-                  />
-                  <button type="button" class="btn-secondary px-3" @click="addTag">Add</button>
-                </div>
-                <div v-if="form.tags.length" class="flex flex-wrap gap-1.5">
-                  <span
-                    v-for="tag in form.tags"
-                    :key="tag"
-                    class="badge bg-brand-600/20 text-brand-300 cursor-pointer hover:bg-red-500/20 hover:text-red-400 transition-colors"
-                    @click="removeTag(tag)"
-                  >
-                    #{{ tag }} ×
-                  </span>
-                </div>
-              </div>
-
-              <!-- Notes -->
-              <div>
-                <label class="label">Notes</label>
-                <textarea
-                  v-model="form.notes"
-                  class="input resize-none"
-                  rows="3"
-                  placeholder="Any personal notes..."
+                <label class="label">Afbeelding URL</label>
+                <input
+                  v-model="form.image_url"
+                  class="input"
+                  type="url"
+                  placeholder="https://..."
                 />
               </div>
             </form>
 
             <!-- Footer actions -->
-            <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/8 bg-surface-900/50">
-              <button type="button" class="btn-secondary" @click="emit('close')">Cancel</button>
+            <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10 bg-surface-900/50">
+              <button type="button" class="btn-secondary" @click="emit('close')">Annuleren</button>
               <button type="submit" class="btn-primary" @click="submit">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
-                {{ isEdit ? 'Save Changes' : 'Add Item' }}
+                {{ isEdit ? 'Opslaan' : 'Toevoegen' }}
               </button>
             </div>
           </div>

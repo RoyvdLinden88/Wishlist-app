@@ -6,12 +6,9 @@ export type Category =
   | 'music'
   | 'restaurant'
   | 'podcast'
-  | 'game'
   | 'other'
 
 export type Status = 'want_to_check' | 'in_progress' | 'done'
-
-export type Priority = 'low' | 'medium' | 'high'
 
 export interface WishlistItem {
   id: string
@@ -19,12 +16,8 @@ export interface WishlistItem {
   description: string | null
   category: Category
   status: Status
-  priority: Priority
-  rating: number | null
-  tags: string[]
   url: string | null
   image_url: string | null
-  notes: string | null
   created_at: string
   updated_at: string
 }
@@ -36,7 +29,7 @@ export type WishlistItemUpdate = Partial<WishlistItemInsert>
 export interface CategoryMeta {
   value: Category
   label: string
-  icon: string
+  svgPath: string
   color: string
   bg: string
 }
@@ -53,8 +46,6 @@ export interface FilterState {
   search: string
   category: Category | 'all'
   status: Status | 'all'
-  priority: Priority | 'all'
-  tags: string[]
-  sortBy: 'created_at' | 'title' | 'priority' | 'rating'
+  sortBy: 'created_at' | 'title'
   sortDir: 'asc' | 'desc'
 }
