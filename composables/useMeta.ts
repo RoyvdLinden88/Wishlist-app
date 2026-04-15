@@ -58,6 +58,13 @@ export const useMeta = () => {
       color: 'text-blue-400',
       bg: 'bg-blue-500/15',
     },
+    {
+      value: 'winkel',
+      label: 'Winkel',
+      svgPath: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z',
+      color: 'text-rose-400',
+      bg: 'bg-rose-500/15',
+    },
   ] as CategoryMeta[]).sort((a, b) => a.label.localeCompare(b.label, 'nl'))
 
   const statuses: StatusMeta[] = [

@@ -10,6 +10,7 @@ const filters = reactive<FilterState>({
   search: '',
   category: 'all',
   status: 'all',
+  tag: null,
   sortBy: 'created_at',
   sortDir: 'desc',
 })
@@ -33,6 +34,10 @@ const filtered = computed(() => {
     result = result.filter(i => i.status === filters.status)
   }
 
+  if (filters.tag) {
+    result = result.filter(i => i.tags?.includes(filters.tag!))
+  }
+
   result.sort((a, b) => {
     const cmp = filters.sortBy === 'title'
       ? a.title.localeCompare(b.title)
@@ -44,12 +49,19 @@ const filtered = computed(() => {
 })
 
 const hasActiveFilters = computed(() =>
-  filters.search || filters.category !== 'all',
+  filters.search || filters.category !== 'all' || filters.tag !== null,
 )
+
+const allTags = computed(() => {
+  const set = new Set<string>()
+  items.value.forEach(i => i.tags?.forEach(t => set.add(t)))
+  return [...set].sort()
+})
 
 const resetFilters = () => {
   filters.search = ''
   filters.category = 'all'
+  filters.tag = null
 }
 
 const editItem = ref<WishlistItem | null>(null)
@@ -139,11 +151,27 @@ const onStatusChange = async (id: string, status: WishlistItem['status']) => {
           </button>
 
           <button
-            v-if="hasActiveFilters"
-            class="ml-auto btn-ghost text-white/40 text-xs"
+            class="ml-auto btn-ghost text-xs transition-colors"
+            :class="hasActiveFilters ? 'text-white/60 hover:text-white' : 'text-white/20 cursor-default'"
+            :disabled="!hasActiveFilters"
             @click="resetFilters"
           >
             Filters wissen
+          </button>
+        </div>
+
+        <!-- Tag pills -->
+        <div v-if="allTags.length" class="flex flex-wrap gap-1.5">
+          <button
+            v-for="tag in allTags"
+            :key="tag"
+            class="badge cursor-pointer transition-all text-xs"
+            :class="filters.tag === tag
+              ? 'bg-brand-600/40 text-brand-300 ring-1 ring-brand-500/40'
+              : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70'"
+            @click="filters.tag = filters.tag === tag ? null : tag"
+          >
+            #{{ tag }}
           </button>
         </div>
 

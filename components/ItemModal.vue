@@ -21,11 +21,13 @@ const defaultForm = (): WishlistItemInsert => ({
   description: null,
   category: 'movie',
   status: 'want_to_check',
+  tags: null,
   url: null,
   image_url: null,
 })
 
 const form = ref<WishlistItemInsert>(defaultForm())
+const tagInput = ref('')
 const selectedFile = ref<File | null>(null)
 const imagePreview = ref<string | null>(null)
 const uploading = ref(false)
@@ -42,6 +44,7 @@ watch(
             description: props.item.description,
             category: props.item.category,
             status: props.item.status,
+            tags: props.item.tags ? [...props.item.tags] : null,
             url: props.item.url,
             image_url: props.item.image_url,
           }
@@ -49,6 +52,7 @@ watch(
       selectedFile.value = null
       imagePreview.value = props.item?.image_url ?? null
       uploadError.value = null
+      tagInput.value = ''
     }
   },
 )
@@ -83,6 +87,30 @@ const clearImage = () => {
   form.value.image_url = null
   uploadError.value = null
   if (fileInput.value) fileInput.value.value = ''
+}
+
+const addTag = () => {
+  const raw = tagInput.value.trim().toLowerCase().replace(/,/g, '')
+  if (!raw) return
+  const existing = form.value.tags ?? []
+  if (!existing.includes(raw)) {
+    form.value.tags = [...existing, raw]
+  }
+  tagInput.value = ''
+}
+
+const removeTag = (tag: string) => {
+  form.value.tags = (form.value.tags ?? []).filter(t => t !== tag) || null
+}
+
+const onTagKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault()
+    addTag()
+  }
+  if (e.key === 'Backspace' && !tagInput.value && form.value.tags?.length) {
+    form.value.tags = form.value.tags.slice(0, -1)
+  }
 }
 
 const uploadImage = async (file: File): Promise<string | null> => {
@@ -215,6 +243,32 @@ const isEdit = computed(() => !!props.item)
                   rows="2"
                   placeholder="Korte omschrijving..."
                 />
+              </div>
+
+              <!-- Tags -->
+              <div>
+                <label class="label">Tags</label>
+                <div class="flex flex-wrap gap-1.5 p-2 rounded-xl bg-surface-700 border border-white/10 focus-within:border-brand-500/50 transition-colors min-h-[2.5rem]">
+                  <span
+                    v-for="tag in (form.tags ?? [])"
+                    :key="tag"
+                    class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-600/30 text-brand-300 text-xs font-medium"
+                  >
+                    {{ tag }}
+                    <button type="button" class="hover:text-white transition-colors" @click="removeTag(tag)">
+                      <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </span>
+                  <input
+                    v-model="tagInput"
+                    class="flex-1 min-w-[120px] bg-transparent text-sm outline-none placeholder-white/25 text-white"
+                    placeholder="Tag toevoegen, druk Enter…"
+                    @keydown="onTagKeydown"
+                    @blur="addTag"
+                  />
+                </div>
               </div>
 
               <!-- URL -->

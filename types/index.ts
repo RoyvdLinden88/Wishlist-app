@@ -7,6 +7,7 @@ export type Category =
   | 'restaurant'
   | 'podcast'
   | 'other'
+  | 'winkel'
 
 export type Status = 'want_to_check' | 'in_progress' | 'done'
 
@@ -16,6 +17,7 @@ export interface WishlistItem {
   description: string | null
   category: Category
   status: Status
+  tags: string[] | null
   url: string | null
   image_url: string | null
   created_at: string
@@ -46,6 +48,7 @@ export interface FilterState {
   search: string
   category: Category | 'all'
   status: Status | 'all'
+  tag: string | null
   sortBy: 'created_at' | 'title'
   sortDir: 'asc' | 'desc'
 }
