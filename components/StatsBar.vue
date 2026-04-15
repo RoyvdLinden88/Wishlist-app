@@ -1,38 +1,33 @@
 <script setup lang="ts">
 import type { WishlistItem } from '~/types'
 
-const props = defineProps<{
-  items: WishlistItem[]
-}>()
-
-const { statuses } = useMeta()
+const props = defineProps<{ items: WishlistItem[] }>()
 
 const stats = computed(() => {
-  const total = props.items.length
-  const done = props.items.filter(i => i.status === 'done').length
+  const total      = props.items.length
+  const wantTo     = props.items.filter(i => i.status === 'want_to_check').length
   const inProgress = props.items.filter(i => i.status === 'in_progress').length
-  const wantToCheck = props.items.filter(i => i.status === 'want_to_check').length
-
+  const done       = props.items.filter(i => i.status === 'done').length
   return [
-    { label: 'Total', value: total, color: 'text-white' },
-    { label: 'Want to Check', value: wantToCheck, color: 'text-blue-400' },
-    { label: 'In Progress', value: inProgress, color: 'text-yellow-400' },
-    { label: 'Done', value: done, color: 'text-green-400' },
+    { label: 'Totaal',   value: total,      color: 'text-ink' },
+    { label: 'Wil ik',   value: wantTo,     color: 'text-blue-500' },
+    { label: 'Bezig',    value: inProgress, color: 'text-amber-500' },
+    { label: 'Klaar',    value: done,       color: 'text-emerald-500' },
   ]
 })
 </script>
 
 <template>
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+  <div class="grid grid-cols-2 gap-2">
     <div
       v-for="stat in stats"
       :key="stat.label"
-      class="glass rounded-xl p-4 text-center"
+      class="rounded-xl bg-inset px-3 py-3 text-center"
     >
-      <div :class="[stat.color, 'font-display text-3xl font-700 tabular-nums']">
+      <div :class="[stat.color, 'font-display text-2xl font-700 tabular-nums leading-none']">
         {{ stat.value }}
       </div>
-      <div class="mt-0.5 text-xs text-white/40 font-medium">{{ stat.label }}</div>
+      <div class="mt-1 text-xs text-ink/40 font-medium">{{ stat.label }}</div>
     </div>
   </div>
 </template>
