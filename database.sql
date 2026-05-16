@@ -24,8 +24,9 @@ ALTER TABLE wishlist_items DROP COLUMN IF EXISTS priority;
 ALTER TABLE wishlist_items DROP COLUMN IF EXISTS rating;
 ALTER TABLE wishlist_items DROP COLUMN IF EXISTS notes;
 
--- Tags array column (re-added)
-ALTER TABLE wishlist_items ADD COLUMN IF NOT EXISTS tags text[];
+-- Location tag (replaces tags array)
+ALTER TABLE wishlist_items DROP COLUMN IF EXISTS tags;
+ALTER TABLE wishlist_items ADD COLUMN IF NOT EXISTS location text;
 
 -- Add new category values to the enum (safe to run multiple times on Postgres 9.1+)
 ALTER TYPE wishlist_category ADD VALUE IF NOT EXISTS 'winkel';

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { WishlistItem, WishlistItemInsert, Category, Status } from '~/types'
+import { getLocationFlagUrl } from '~/composables/useMeta'
 
 const props = defineProps<{
   open: boolean
@@ -21,13 +22,12 @@ const defaultForm = (): WishlistItemInsert => ({
   description: null,
   category: 'movie',
   status: 'want_to_check',
-  tags: null,
+  location: null,
   url: null,
   image_url: null,
 })
 
 const form = ref<WishlistItemInsert>(defaultForm())
-const tagInput = ref('')
 const selectedFile = ref<File | null>(null)
 const imagePreview = ref<string | null>(null)
 const uploading = ref(false)
@@ -44,7 +44,7 @@ watch(
             description: props.item.description,
             category: props.item.category,
             status: props.item.status,
-            tags: props.item.tags ? [...props.item.tags] : null,
+            location: props.item.location,
             url: props.item.url,
             image_url: props.item.image_url,
           }
@@ -52,7 +52,6 @@ watch(
       selectedFile.value = null
       imagePreview.value = props.item?.image_url ?? null
       uploadError.value = null
-      tagInput.value = ''
     }
   },
 )
@@ -87,30 +86,6 @@ const clearImage = () => {
   form.value.image_url = null
   uploadError.value = null
   if (fileInput.value) fileInput.value.value = ''
-}
-
-const addTag = () => {
-  const raw = tagInput.value.trim().toLowerCase().replace(/,/g, '')
-  if (!raw) return
-  const existing = form.value.tags ?? []
-  if (!existing.includes(raw)) {
-    form.value.tags = [...existing, raw]
-  }
-  tagInput.value = ''
-}
-
-const removeTag = (tag: string) => {
-  form.value.tags = (form.value.tags ?? []).filter(t => t !== tag) || null
-}
-
-const onTagKeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Enter' || e.key === ',') {
-    e.preventDefault()
-    addTag()
-  }
-  if (e.key === 'Backspace' && !tagInput.value && form.value.tags?.length) {
-    form.value.tags = form.value.tags.slice(0, -1)
-  }
 }
 
 const uploadImage = async (file: File): Promise<string | null> => {
@@ -245,28 +220,25 @@ const isEdit = computed(() => !!props.item)
                 />
               </div>
 
-              <!-- Tags -->
+              <!-- Location -->
               <div>
-                <label class="label">Tags</label>
-                <div class="flex flex-wrap gap-1.5 p-2 rounded-xl bg-surface-700 border border-white/10 focus-within:border-brand-500/50 transition-colors min-h-[2.5rem]">
-                  <span
-                    v-for="tag in (form.tags ?? [])"
-                    :key="tag"
-                    class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-600/30 text-brand-300 text-xs font-medium"
-                  >
-                    {{ tag }}
-                    <button type="button" class="hover:text-white transition-colors" @click="removeTag(tag)">
-                      <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </span>
+                <label class="label">Locatie</label>
+                <div class="relative">
+                  <div class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center">
+                    <img
+                      v-if="form.location && getLocationFlagUrl(form.location)"
+                      :src="getLocationFlagUrl(form.location)!"
+                      class="w-5 rounded-sm"
+                    />
+                    <svg v-else class="h-4 w-4 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
                   <input
-                    v-model="tagInput"
-                    class="flex-1 min-w-[120px] bg-transparent text-sm outline-none placeholder-white/25 text-white"
-                    placeholder="Tag toevoegen, druk Enter…"
-                    @keydown="onTagKeydown"
-                    @blur="addTag"
+                    v-model="form.location"
+                    class="input pl-9"
+                    placeholder="bijv. Brussel, Amsterdam, Parijs…"
                   />
                 </div>
               </div>

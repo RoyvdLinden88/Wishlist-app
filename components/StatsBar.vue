@@ -5,25 +5,22 @@ const props = defineProps<{
   items: WishlistItem[]
 }>()
 
-const { statuses } = useMeta()
 
 const stats = computed(() => {
   const total = props.items.length
   const done = props.items.filter(i => i.status === 'done').length
-  const inProgress = props.items.filter(i => i.status === 'in_progress').length
-  const wantToCheck = props.items.filter(i => i.status === 'want_to_check').length
+  const todo = props.items.filter(i => i.status === 'want_to_check').length
 
   return [
-    { label: 'Total', value: total, color: 'text-white' },
-    { label: 'Want to Check', value: wantToCheck, color: 'text-blue-400' },
-    { label: 'In Progress', value: inProgress, color: 'text-yellow-400' },
-    { label: 'Done', value: done, color: 'text-green-400' },
+    { label: 'Totaal', value: total, color: 'text-white' },
+    { label: 'Todo', value: todo, color: 'text-blue-400' },
+    { label: 'Klaar', value: done, color: 'text-green-400' },
   ]
 })
 </script>
 
 <template>
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+  <div class="grid grid-cols-3 gap-3">
     <div
       v-for="stat in stats"
       :key="stat.label"

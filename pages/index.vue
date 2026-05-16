@@ -1,22 +1,26 @@
 <script setup lang="ts">
-import type { WishlistItem, FilterState, Category, Status } from '~/types'
+import type { FilterState, Category } from '~/types'
+import { getLocationFlagUrl } from '~/composables/useMeta'
 
-const { items, loading, error, fetchItems, updateItem, deleteItem } = useWishlist()
+const { items, loading, error, fetchItems } = useWishlist()
 const { categories } = useMeta()
 
 await fetchItems()
+
+const view = ref<'todo' | 'archive'>('todo')
 
 const filters = reactive<FilterState>({
   search: '',
   category: 'all',
   status: 'all',
-  tag: null,
+  location: null,
   sortBy: 'created_at',
   sortDir: 'desc',
 })
 
 const filtered = computed(() => {
-  let result = [...items.value]
+  const targetStatus = view.value === 'todo' ? 'want_to_check' : 'done'
+  let result = items.value.filter(i => i.status === targetStatus)
 
   if (filters.search) {
     const q = filters.search.toLowerCase()
@@ -30,12 +34,8 @@ const filtered = computed(() => {
     result = result.filter(i => i.category === filters.category)
   }
 
-  if (filters.status !== 'all') {
-    result = result.filter(i => i.status === filters.status)
-  }
-
-  if (filters.tag) {
-    result = result.filter(i => i.tags?.includes(filters.tag!))
+  if (filters.location) {
+    result = result.filter(i => i.location === filters.location)
   }
 
   result.sort((a, b) => {
@@ -49,48 +49,25 @@ const filtered = computed(() => {
 })
 
 const hasActiveFilters = computed(() =>
-  filters.search || filters.category !== 'all' || filters.tag !== null,
+  filters.search || filters.category !== 'all' || filters.location !== null,
 )
 
-const allTags = computed(() => {
+const allLocations = computed(() => {
+  const targetStatus = view.value === 'todo' ? 'want_to_check' : 'done'
   const set = new Set<string>()
-  items.value.forEach(i => i.tags?.forEach(t => set.add(t)))
+  items.value
+    .filter(i => i.status === targetStatus && i.location)
+    .forEach(i => set.add(i.location!))
   return [...set].sort()
 })
 
 const resetFilters = () => {
   filters.search = ''
   filters.category = 'all'
-  filters.tag = null
+  filters.location = null
 }
 
-const editItem = ref<WishlistItem | null>(null)
-const deleteId = ref<string | null>(null)
-const modalOpen = ref(false)
 
-const onEdit = (item: WishlistItem) => {
-  editItem.value = item
-  modalOpen.value = true
-}
-
-const onSave = async (data: any) => {
-  if (editItem.value) {
-    await updateItem(editItem.value.id, data)
-  }
-  modalOpen.value = false
-  editItem.value = null
-}
-
-const onDelete = async () => {
-  if (deleteId.value) {
-    await deleteItem(deleteId.value)
-    deleteId.value = null
-  }
-}
-
-const onStatusChange = async (id: string, status: WishlistItem['status']) => {
-  await updateItem(id, { status })
-}
 </script>
 
 <template>
@@ -99,9 +76,27 @@ const onStatusChange = async (id: string, status: WishlistItem['status']) => {
 
     <!-- Hero + Stats (not sticky) -->
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8 pb-6 space-y-6">
-      <div class="space-y-1">
-        <h1 class="font-display text-4xl font-800 tracking-tight">Jouw Verlanglijst</h1>
-        <p class="text-white/40 text-sm">Alles wat je wilt ontdekken, op één plek.</p>
+      <div class="flex items-start justify-between gap-4">
+        <div class="space-y-1">
+          <h1 class="font-display text-4xl font-800 tracking-tight">Jouw Verlanglijst</h1>
+          <p class="text-white/40 text-sm">Alles wat je wilt ontdekken, op één plek.</p>
+        </div>
+        <div class="flex gap-1 rounded-xl bg-white/5 p-1 mt-1 flex-shrink-0">
+          <button
+            class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all"
+            :class="view === 'todo' ? 'bg-brand-600 text-white shadow' : 'text-white/40 hover:text-white'"
+            @click="view = 'todo'; resetFilters()"
+          >
+            Todo
+          </button>
+          <button
+            class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all"
+            :class="view === 'archive' ? 'bg-white/10 text-white shadow' : 'text-white/40 hover:text-white'"
+            @click="view = 'archive'; resetFilters()"
+          >
+            Archief
+          </button>
+        </div>
       </div>
       <StatsBar :items="items" />
     </div>
@@ -160,18 +155,19 @@ const onStatusChange = async (id: string, status: WishlistItem['status']) => {
           </button>
         </div>
 
-        <!-- Tag pills -->
-        <div v-if="allTags.length" class="flex flex-wrap gap-1.5">
+        <!-- Location pills -->
+        <div v-if="allLocations.length" class="flex flex-wrap gap-1.5">
           <button
-            v-for="tag in allTags"
-            :key="tag"
-            class="badge cursor-pointer transition-all text-xs"
-            :class="filters.tag === tag
+            v-for="loc in allLocations"
+            :key="loc"
+            class="badge cursor-pointer transition-all text-xs gap-1.5"
+            :class="filters.location === loc
               ? 'bg-brand-600/40 text-brand-300 ring-1 ring-brand-500/40'
               : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70'"
-            @click="filters.tag = filters.tag === tag ? null : tag"
+            @click="filters.location = filters.location === loc ? null : loc"
           >
-            #{{ tag }}
+            <img v-if="getLocationFlagUrl(loc)" :src="getLocationFlagUrl(loc)!" :alt="loc" class="w-4 rounded-sm flex-shrink-0" />
+            {{ loc }}
           </button>
         </div>
 
@@ -225,15 +221,15 @@ const onStatusChange = async (id: string, status: WishlistItem['status']) => {
           </svg>
         </div>
         <h3 class="font-display font-700 text-xl mb-2">
-          {{ hasActiveFilters ? 'Geen resultaten' : 'Je verlanglijst is leeg' }}
+          {{ hasActiveFilters ? 'Geen resultaten' : view === 'archive' ? 'Archief is leeg' : 'Je verlanglijst is leeg' }}
         </h3>
         <p class="text-white/40 text-sm mb-6 max-w-xs">
-          {{ hasActiveFilters ? 'Probeer je filters aan te passen.' : 'Begin met het toevoegen van dingen die je wilt ontdekken!' }}
+          {{ hasActiveFilters ? 'Probeer je filters aan te passen.' : view === 'archive' ? 'Items die je afvinkt verschijnen hier.' : 'Begin met het toevoegen van dingen die je wilt ontdekken!' }}
         </p>
         <button v-if="hasActiveFilters" class="btn-secondary" @click="resetFilters">
           Filters wissen
         </button>
-        <NuxtLink v-else to="/manage" class="btn-primary">
+        <NuxtLink v-else-if="view === 'todo'" to="/manage" class="btn-primary">
           Eerste item toevoegen
         </NuxtLink>
       </div>
@@ -244,26 +240,9 @@ const onStatusChange = async (id: string, status: WishlistItem['status']) => {
           v-for="item in filtered"
           :key="item.id"
           :item="item"
-          @edit="onEdit"
-          @delete="(id) => (deleteId = id)"
-          @status-change="onStatusChange"
         />
       </div>
     </div>
 
-    <ItemModal
-      :open="modalOpen"
-      :item="editItem"
-      @close="modalOpen = false; editItem = null"
-      @save="onSave"
-    />
-
-    <ConfirmModal
-      :open="!!deleteId"
-      title="Item verwijderen?"
-      message="Dit item wordt permanent van je verlanglijst verwijderd."
-      @confirm="onDelete"
-      @cancel="deleteId = null"
-    />
   </div>
 </template>

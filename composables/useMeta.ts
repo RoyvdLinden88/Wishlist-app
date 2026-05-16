@@ -1,5 +1,76 @@
 import type { Category, CategoryMeta, Status, StatusMeta } from '~/types'
 
+const LOCATION_CODES: Record<string, string> = {
+  // Belgium
+  brussel: 'be', brussels: 'be', antwerpen: 'be', antwerp: 'be',
+  gent: 'be', brugge: 'be', bruges: 'be', luik: 'be', 'liège': 'be',
+  'belgië': 'be', belgium: 'be',
+  // Netherlands
+  amsterdam: 'nl', rotterdam: 'nl', 'den haag': 'nl', 'the hague': 'nl',
+  utrecht: 'nl', eindhoven: 'nl', nederland: 'nl', netherlands: 'nl',
+  // France
+  parijs: 'fr', paris: 'fr', lyon: 'fr', marseille: 'fr', nice: 'fr',
+  bordeaux: 'fr', frankrijk: 'fr', france: 'fr',
+  // UK
+  londen: 'gb', london: 'gb', manchester: 'gb', edinburgh: 'gb',
+  glasgow: 'gb', birmingham: 'gb', uk: 'gb', engeland: 'gb',
+  // Germany
+  berlijn: 'de', berlin: 'de', 'münchen': 'de', munich: 'de',
+  hamburg: 'de', frankfurt: 'de', duitsland: 'de', germany: 'de',
+  // Spain
+  madrid: 'es', barcelona: 'es', sevilla: 'es', valencia: 'es',
+  spanje: 'es', spain: 'es',
+  // Italy
+  rome: 'it', roma: 'it', milaan: 'it', milan: 'it',
+  'venetië': 'it', venice: 'it', florence: 'it', napels: 'it',
+  'italië': 'it', italy: 'it',
+  // Portugal
+  lissabon: 'pt', lisbon: 'pt', porto: 'pt', portugal: 'pt',
+  // Austria
+  wenen: 'at', wien: 'at', vienna: 'at', salzburg: 'at',
+  oostenrijk: 'at', austria: 'at',
+  // Switzerland
+  'zürich': 'ch', 'genève': 'ch', zwitserland: 'ch', switzerland: 'ch',
+  // Czech Republic
+  praag: 'cz', prague: 'cz', 'tsjechië': 'cz',
+  // Denmark
+  kopenhagen: 'dk', copenhagen: 'dk', denemarken: 'dk',
+  // Sweden
+  stockholm: 'se', zweden: 'se', sweden: 'se',
+  // Norway
+  oslo: 'no', noorwegen: 'no', norway: 'no',
+  // Finland
+  helsinki: 'fi', finland: 'fi',
+  // Ireland
+  dublin: 'ie', ierland: 'ie', ireland: 'ie',
+  // Poland
+  warschau: 'pl', warsaw: 'pl', krakau: 'pl', poland: 'pl', polen: 'pl',
+  // USA
+  'new york': 'us', 'los angeles': 'us', chicago: 'us', miami: 'us',
+  'san francisco': 'us', 'las vegas': 'us', usa: 'us', 'united states': 'us',
+  // Japan
+  tokyo: 'jp', osaka: 'jp', kyoto: 'jp', japan: 'jp',
+  // China
+  beijing: 'cn', shanghai: 'cn', china: 'cn',
+  // South Korea
+  seoul: 'kr', korea: 'kr',
+  // Australia
+  sydney: 'au', melbourne: 'au', 'australië': 'au', australia: 'au',
+  // UAE
+  dubai: 'ae', uae: 'ae',
+  // Turkey
+  istanbul: 'tr', turkije: 'tr', turkey: 'tr',
+  // Thailand
+  bangkok: 'th', thailand: 'th',
+  // Singapore
+  singapore: 'sg',
+}
+
+export const getLocationFlagUrl = (location: string): string | null => {
+  const code = LOCATION_CODES[location.toLowerCase().trim()]
+  return code ? `https://flagcdn.com/20x15/${code}.png` : null
+}
+
 export const useMeta = () => {
   const categories: CategoryMeta[] = ([
     {
@@ -19,7 +90,7 @@ export const useMeta = () => {
     {
       value: 'restaurant',
       label: 'Eten & Drinken',
-      svgPath: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z',
+      svgPath: 'M5 2v5a2 2 0 004 0V2M7 7v15M15 2v20M17 2a4 4 0 010 6',
       color: 'text-yellow-400',
       bg: 'bg-yellow-500/15',
     },
@@ -68,9 +139,8 @@ export const useMeta = () => {
   ] as CategoryMeta[]).sort((a, b) => a.label.localeCompare(b.label, 'nl'))
 
   const statuses: StatusMeta[] = [
-    { value: 'want_to_check', label: 'Wil ik bekijken', color: 'text-blue-400',   bg: 'bg-blue-500/15',   dot: 'bg-blue-400' },
-    { value: 'in_progress',   label: 'Bezig',           color: 'text-yellow-400', bg: 'bg-yellow-500/15', dot: 'bg-yellow-400' },
-    { value: 'done',          label: 'Klaar',           color: 'text-green-400',  bg: 'bg-green-500/15',  dot: 'bg-green-400' },
+    { value: 'want_to_check', label: 'Todo',  color: 'text-blue-400',  bg: 'bg-blue-500/15',  dot: 'bg-blue-400' },
+    { value: 'done',          label: 'Klaar', color: 'text-green-400', bg: 'bg-green-500/15', dot: 'bg-green-400' },
   ]
 
   const getCategoryMeta = (value: Category): CategoryMeta =>
