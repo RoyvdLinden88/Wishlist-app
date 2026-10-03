@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { WishlistItem, WishlistItemInsert, Category, Status } from '~/types'
 import { getLocationFlagUrl } from '~/composables/useMeta'
+import { useDebounceFn } from '@vueuse/core'
 
 const props = defineProps<{
   open: boolean
@@ -25,14 +26,44 @@ const defaultForm = (): WishlistItemInsert => ({
   location: null,
   url: null,
   image_url: null,
+  image_focus_x: 50,
+  image_focus_y: 50,
 })
 
 const form = ref<WishlistItemInsert>(defaultForm())
+const pickerQuery = ref('')
+const updatePickerQuery = useDebounceFn((title: string) => { pickerQuery.value = title }, 600)
+watch(() => form.value.title, updatePickerQuery)
+
+const onImageSelect = (url: string) => {
+  if (imagePreview.value?.startsWith('blob:')) URL.revokeObjectURL(imagePreview.value)
+  selectedFile.value = null
+  imagePreview.value = url
+  form.value.image_url = url
+  form.value.image_focus_x = 50
+  form.value.image_focus_y = 50
+}
+
 const selectedFile = ref<File | null>(null)
 const imagePreview = ref<string | null>(null)
 const uploading = ref(false)
 const uploadError = ref<string | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
+const focusContainer = ref<HTMLDivElement | null>(null)
+const isDraggingFocus = ref(false)
+
+const updateFocus = (e: MouseEvent) => {
+  if (!focusContainer.value) return
+  const rect = focusContainer.value.getBoundingClientRect()
+  const x = Math.round(Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)))
+  const y = Math.round(Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100)))
+  form.value.image_focus_x = x
+  form.value.image_focus_y = y
+}
+
+const startFocusDrag = (e: MouseEvent) => { isDraggingFocus.value = true; updateFocus(e) }
+const onFocusDrag = (e: MouseEvent) => { if (isDraggingFocus.value) updateFocus(e) }
+const stopFocusDrag = () => { isDraggingFocus.value = false }
 
 watch(
   () => props.open,
@@ -47,11 +78,14 @@ watch(
             location: props.item.location,
             url: props.item.url,
             image_url: props.item.image_url,
+            image_focus_x: props.item.image_focus_x ?? 50,
+            image_focus_y: props.item.image_focus_y ?? 50,
           }
         : defaultForm()
       selectedFile.value = null
       imagePreview.value = props.item?.image_url ?? null
       uploadError.value = null
+      pickerQuery.value = ''
     }
   },
 )
@@ -209,6 +243,14 @@ const isEdit = computed(() => !!props.item)
                 </div>
               </div>
 
+              <!-- Auto image picker -->
+              <ImagePicker
+                v-if="pickerQuery"
+                :query="pickerQuery"
+                :category="form.category as Category"
+                @select="onImageSelect"
+              />
+
               <!-- Description -->
               <div>
                 <label class="label">Omschrijving</label>
@@ -258,14 +300,37 @@ const isEdit = computed(() => !!props.item)
               <div>
                 <label class="label">Afbeelding</label>
 
-                <!-- Preview -->
-                <div v-if="imagePreview" class="relative mb-3 rounded-xl overflow-hidden aspect-video bg-surface-700">
-                  <img :src="imagePreview" alt="Voorbeeld" class="w-full h-full object-cover" />
+                <!-- Preview with focal point picker -->
+                <div
+                  v-if="imagePreview"
+                  ref="focusContainer"
+                  class="relative mb-3 rounded-xl overflow-hidden aspect-video bg-surface-700 cursor-crosshair select-none"
+                  @mousedown="startFocusDrag"
+                  @mousemove="onFocusDrag"
+                  @mouseup="stopFocusDrag"
+                  @mouseleave="stopFocusDrag"
+                >
+                  <img
+                    :src="imagePreview"
+                    alt="Voorbeeld"
+                    class="w-full h-full object-cover pointer-events-none"
+                    :style="{ objectPosition: `${form.image_focus_x ?? 50}% ${form.image_focus_y ?? 50}%` }"
+                  />
+                  <!-- Focal point dot -->
+                  <div
+                    class="absolute w-5 h-5 rounded-full border-2 border-white ring-1 ring-black/50 shadow-md pointer-events-none -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-75"
+                    :style="{ left: `${form.image_focus_x ?? 50}%`, top: `${form.image_focus_y ?? 50}%` }"
+                  />
+                  <!-- Label -->
+                  <div class="absolute bottom-2 left-2 text-[10px] text-white/60 bg-black/50 px-1.5 py-0.5 rounded pointer-events-none">
+                    Sleep om focuspunt te zetten
+                  </div>
+                  <!-- Remove button -->
                   <button
                     type="button"
                     class="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-lg bg-black/60 backdrop-blur-sm text-white/70 hover:text-white hover:bg-black/80 transition-colors"
                     title="Afbeelding verwijderen"
-                    @click="clearImage"
+                    @click.stop="clearImage"
                   >
                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
