@@ -1,4 +1,8 @@
 export default defineNuxtConfig({
+  runtimeConfig: {
+    tmdbApiKey: '',
+    serpApiKey: '',
+  },
   devtools: { enabled: true },
   ssr: false,
 

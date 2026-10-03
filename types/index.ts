@@ -20,6 +20,8 @@ export interface WishlistItem {
   location: string | null
   url: string | null
   image_url: string | null
+  image_focus_x: number | null
+  image_focus_y: number | null
   created_at: string
   updated_at: string
 }
