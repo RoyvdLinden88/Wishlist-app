@@ -28,6 +28,7 @@ const defaultForm = (): WishlistItemInsert => ({
   image_url: null,
   image_focus_x: 50,
   image_focus_y: 50,
+  image_zoom: 1,
 })
 
 const form = ref<WishlistItemInsert>(defaultForm())
@@ -77,6 +78,7 @@ watch(
             image_url: props.item.image_url,
             image_focus_x: props.item.image_focus_x ?? 50,
             image_focus_y: props.item.image_focus_y ?? 50,
+            image_zoom: props.item.image_zoom ?? 1,
           }
         : defaultForm()
       selectedFile.value = null
@@ -94,6 +96,12 @@ const onImageSelect = (url: string) => {
   form.value.image_url = url
   form.value.image_focus_x = 50
   form.value.image_focus_y = 50
+  form.value.image_zoom = 1
+}
+
+const adjustZoom = (delta: number) => {
+  const current = form.value.image_zoom ?? 1
+  form.value.image_zoom = Math.round(Math.max(1, Math.min(3, current + delta)) * 10) / 10
 }
 
 const onFileChange = (e: Event) => {
@@ -116,6 +124,7 @@ const onFileChange = (e: Event) => {
   imagePreview.value = URL.createObjectURL(file)
   form.value.image_focus_x = 50
   form.value.image_focus_y = 50
+  form.value.image_zoom = 1
 }
 
 const clearImage = () => {
@@ -323,7 +332,11 @@ const isEdit = computed(() => !!props.item)
                     :src="imagePreview"
                     alt="Voorbeeld"
                     class="w-full h-full object-cover pointer-events-none"
-                    :style="{ objectPosition: `${form.image_focus_x ?? 50}% ${form.image_focus_y ?? 50}%` }"
+                    :style="{
+                      objectPosition: `${form.image_focus_x ?? 50}% ${form.image_focus_y ?? 50}%`,
+                      transform: `scale(${form.image_zoom ?? 1})`,
+                      transformOrigin: `${form.image_focus_x ?? 50}% ${form.image_focus_y ?? 50}%`,
+                    }"
                   />
                   <!-- Focal point dot -->
                   <div
@@ -333,6 +346,24 @@ const isEdit = computed(() => !!props.item)
                   <!-- Hint label -->
                   <div class="absolute bottom-2 left-2 text-[10px] text-white/60 bg-black/50 px-1.5 py-0.5 rounded pointer-events-none">
                     Sleep om focuspunt te zetten
+                  </div>
+                  <!-- Zoom controls -->
+                  <div class="absolute bottom-2 right-2 flex items-center gap-1 pointer-events-auto" @mousedown.stop @touchstart.stop>
+                    <button
+                      type="button"
+                      class="flex h-6 w-6 items-center justify-center rounded-md bg-black/60 backdrop-blur-sm text-white/80 hover:text-white hover:bg-black/80 transition-colors text-sm font-medium leading-none"
+                      :disabled="(form.image_zoom ?? 1) <= 1"
+                      @click.stop="adjustZoom(-0.1)"
+                    >−</button>
+                    <span class="text-[10px] text-white/70 bg-black/50 px-1.5 py-0.5 rounded min-w-[2.5rem] text-center tabular-nums">
+                      {{ (form.image_zoom ?? 1).toFixed(1) }}×
+                    </span>
+                    <button
+                      type="button"
+                      class="flex h-6 w-6 items-center justify-center rounded-md bg-black/60 backdrop-blur-sm text-white/80 hover:text-white hover:bg-black/80 transition-colors text-sm font-medium leading-none"
+                      :disabled="(form.image_zoom ?? 1) >= 3"
+                      @click.stop="adjustZoom(0.1)"
+                    >+</button>
                   </div>
                   <!-- Remove button -->
                   <button

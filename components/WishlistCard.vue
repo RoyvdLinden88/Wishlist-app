@@ -29,7 +29,11 @@ const descExpanded = ref(false)
           :src="imageUrl"
           :alt="item.title"
           class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-          :style="{ objectPosition: `${item.image_focus_x ?? 50}% ${item.image_focus_y ?? 50}%` }"
+          :style="{
+            objectPosition: `${item.image_focus_x ?? 50}% ${item.image_focus_y ?? 50}%`,
+            transform: `scale(${item.image_zoom ?? 1})`,
+            transformOrigin: `${item.image_focus_x ?? 50}% ${item.image_focus_y ?? 50}%`,
+          }"
           loading="lazy"
         />
       </div>

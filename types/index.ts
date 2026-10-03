@@ -22,6 +22,7 @@ export interface WishlistItem {
   image_url: string | null
   image_focus_x: number | null
   image_focus_y: number | null
+  image_zoom: number | null
   created_at: string
   updated_at: string
 }
