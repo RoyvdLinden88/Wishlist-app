@@ -43,23 +43,6 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const focusContainer = ref<HTMLDivElement | null>(null)
 const isDraggingFocus = ref(false)
 
-const updateFocus = (e: MouseEvent) => {
-  if (!focusContainer.value) return
-  const rect = focusContainer.value.getBoundingClientRect()
-  const x = Math.round(Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)))
-  const y = Math.round(Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100)))
-  form.value.image_focus_x = x
-  form.value.image_focus_y = y
-}
-
-const startFocusDrag = (e: MouseEvent) => { isDraggingFocus.value = true; updateFocus(e) }
-const onFocusDrag = (e: MouseEvent) => { if (isDraggingFocus.value) updateFocus(e) }
-const stopFocusDrag = () => { isDraggingFocus.value = false }
-
-// Focal point drag — supports both mouse and touch (iOS)
-const focusContainer = ref<HTMLDivElement | null>(null)
-const isDraggingFocus = ref(false)
-
 const getCoords = (e: MouseEvent | TouchEvent) => {
   if ('touches' in e && e.touches.length > 0) {
     return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY }
